@@ -1,7 +1,8 @@
 <template>
      <div>
+       <price-factor :priceOption="priceOption" :priceFactorKv="priceFactorKv" @changePriceFacor="changePriceFacor"></price-factor>
     <el-table
-      :data="tableData6"
+      :data="tableData"
       border
       style="width: 100%; margin-top: 20px"  :cellClassName="getCellClassName" :spanMethod="objectSpanMethod" :emptyText="'--'">
        <el-table-column  :prop="tablekey"  :label="tableHeadName" v-for="(tableHeadName, tablekey) in tableHeader" :key="tablekey">
@@ -24,17 +25,12 @@
 <script>
 import _ from 'lodash'
 import * as util from '@/common/js/util'
+import {priceFactorKv} from '@/common/js/params'
+import priceFactor from '@/components/priceFactor'
 export default {
   data () {
     return {
-      tableData6: [],
-      attrKv: {
-        sex: '性别',
-        age: '年龄',
-        hc: '承载人数',
-        fs: '份数'
-      },
-      theadKey: ['sex', 'age', 'hc'],
+      tableData: [],
       priceOption: {
         sex: ['男', '女'],
         age: [18, 20],
@@ -42,15 +38,21 @@ export default {
       }
     }
   },
+  components: {
+    priceFactor
+  },
   created () {
     this.initializeTable()
+    this.priceFactorKv = priceFactorKv
   },
   methods: {
     initializeTable () {
-      this.tableData6 = this.startCombine(this.priceOption)
-      this.buildSortAndCombineArr(this.tableData6)
+      this.tableData = this.startCombine(this.priceOption)
+      this.buildSortAndCombineArr(this.tableData)
     },
-    refreshTable () {},
+    changePriceFacor () {
+
+    },
     getAttributeCount (obj) {
       var count = 0
       for (var i in obj) {
@@ -62,17 +64,17 @@ export default {
       return count
     },
     addColumn () {
-      this.theadKey.push('fs')
       this.addTagChoose('fs', '5份')
-      this.tableData6 = this.startCombine(this.priceOption)
-      this.buildSortAndCombineArr(this.tableData6)
+      this.tableData = this.startCombine(this.priceOption)
+      this.buildSortAndCombineArr(this.tableData)
     },
     addRow () {
-      this.addTagChoose('hc', '9-12人')
-      this.tableData6 = this.tableData6.concat(
-        this.buildNewDataArray('hc', '9-12人')
-      )
-      this.buildSortAndCombineArr(this.tableData6)
+      if (this.addTagChoose('hc', '9-12人')) {
+        this.tableData = this.tableData.concat(
+                  this.buildNewDataArray('hc', '9-12人')
+           )
+        this.buildSortAndCombineArr(this.tableData)
+      }
     },
     buildSortAndCombineArr (datas) {
       datas = util.orderBy(datas, this.priceFactor)
@@ -82,7 +84,7 @@ export default {
       datas = datas.map(data => {
         return _.pick(data, ['price', ...this.priceFactor])
       })
-      this.tableData6 = this.combineCell(datas)
+      this.tableData = this.combineCell(datas)
       // console.log(datas)
     },
     buildNewDataArray (curAttr, curdata) {
@@ -99,10 +101,13 @@ export default {
       if (_.isArray(dealValue)) {
         if (dealValue.indexOf(tagValue) === -1) {
           dealValue.push(tagValue)
+        } else {
+          return false
         }
       } else {
         this.$set(this.priceOption, tagType, [tagValue])
       }
+      return true
     },
     addPrice (item, price) {
       this.$set(item, 'price', price)
@@ -191,7 +196,14 @@ export default {
       return this.getAttributeCount(this.tableHeader)
     },
     tableHeader () {
-      return _.pick(this.attrKv, this.theadKey)
+      return _.pick(priceFactorKv, this.theadKey)
+    },
+    theadKey () {
+      var keyArray = []
+      for (var i in this.priceOption) {
+        keyArray.push(i)
+      }
+      return keyArray
     }
   }
 }
@@ -201,6 +213,7 @@ export default {
  
 
 <style lang="less">
+
 .hidden {
   display: none;
 }
