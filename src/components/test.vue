@@ -1,6 +1,6 @@
 <template>
      <div>
-       <price-factor :priceOption="priceOption" :priceFactorKv="priceFactorKv" @changePriceFacor="changePriceFacor"></price-factor>
+       <price-factor :priceOption="priceOption" :priceFactorKv="priceFactorKv" @addPriceFacOption="addPriceFacOption"  @deletePriceFacOption="deletePriceFacOption"></price-factor>
     <el-table
       :data="tableData"
       border
@@ -9,7 +9,7 @@
       </el-table-column>
       <el-table-column prop="price"  label="价格">
         <template slot-scope="scope">
-            <el-input size="medium" v-model="scope.row.price" placeholder="请输入价格" @change="handleEdit(scope.$index, scope.row)"></el-input>  
+            <el-input size="medium" v-model="scope.row.price" placeholder="请输入价格"></el-input>  
          </template>
       </el-table-column>
     </el-table>
@@ -50,8 +50,20 @@ export default {
       this.tableData = this.startCombine(this.priceOption)
       this.buildSortAndCombineArr(this.tableData)
     },
-    changePriceFacor () {
-
+    addPriceFacOption (optionType, optionValue) {
+      /* 添加某类别的价格因素下属标签 */
+      if (this.addPriceFactorTag(optionType, optionValue)) {
+        this.tableData = this.tableData.concat(
+                  this.buildNewDataArray(optionType, optionValue)
+           )
+        this.buildSortAndCombineArr(this.tableData)
+      }
+    },
+    deletePriceFacOption (optionType, optionValue) {
+      let dealValue = this.priceOption[optionType]
+      if (_.isArray(dealValue)) {
+        dealValue = dealValue.splice(dealValue.indexOf(optionValue), 1)
+      }
     },
     getAttributeCount (obj) {
       var count = 0
@@ -64,17 +76,9 @@ export default {
       return count
     },
     addColumn () {
-      this.addTagChoose('fs', '5份')
+      this.addPriceFactorTag('fs', '5份')
       this.tableData = this.startCombine(this.priceOption)
       this.buildSortAndCombineArr(this.tableData)
-    },
-    addRow () {
-      if (this.addTagChoose('hc', '9-12人')) {
-        this.tableData = this.tableData.concat(
-                  this.buildNewDataArray('hc', '9-12人')
-           )
-        this.buildSortAndCombineArr(this.tableData)
-      }
     },
     buildSortAndCombineArr (datas) {
       datas = util.orderBy(datas, this.priceFactor)
@@ -96,7 +100,7 @@ export default {
       pendData[curAttr] = [curdata]
       return this.startCombine(pendData)
     },
-    addTagChoose (tagType, tagValue) {
+    addPriceFactorTag (tagType, tagValue) {
       let dealValue = this.priceOption[tagType]
       if (_.isArray(dealValue)) {
         if (dealValue.indexOf(tagValue) === -1) {
@@ -108,9 +112,6 @@ export default {
         this.$set(this.priceOption, tagType, [tagValue])
       }
       return true
-    },
-    addPrice (item, price) {
-      this.$set(item, 'price', price)
     },
     getCellClassName ({ row, column, rowIndex, columnIndex }) {
       if (
@@ -181,8 +182,7 @@ export default {
         }
       }
       return list
-    },
-    handleEdit (index, row) {}
+    }
   },
   computed: {
     priceFactor: function () {
@@ -196,7 +196,7 @@ export default {
       return this.getAttributeCount(this.tableHeader)
     },
     tableHeader () {
-      return _.pick(priceFactorKv, this.theadKey)
+      return _.pick(this.priceFactorKv, this.theadKey)
     },
     theadKey () {
       var keyArray = []

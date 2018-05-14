@@ -1,16 +1,26 @@
 <template>
      <div>
-     <div v-for="(value,key) in priceOption" :key="key" class="pd-8">
-       <span class="option-type">{{priceFactorKv[key]}}</span>
-       <el-tag :key="tag"
-            v-for="tag in value"
-            closable
-            :disable-transitions="false"
-            @close="handleClose(value,tag)">
-            {{tag}}
-      </el-tag>
-           <el-button   class="button-new-tag" size="small">+ 新增</el-button>
-       </div>  
+     <div v-for="(value,key) in priceOption" :key="key" class="pd-8 h-50">
+        <span class="option-type">{{priceFactorKv[key]}}</span>
+        <el-tag :key="tag"
+              v-for="tag in value"
+              closable
+              :disable-transitions="false"
+              @close="deletePriceFacOption(key,tag)">
+              {{tag}}
+        </el-tag>
+        <el-input
+          class="input-new-tag"
+          v-if="inputVisible[key]"
+          size="small"
+          v-model="inputValue[key]"
+          ref="saveTagInput"
+          @keyup.enter.native="handleInputConfirm(key)"
+          @blur="handleInputConfirm(key)"
+        >
+        </el-input>
+        <el-button v-else class="button-new-tag" size="small" @click="showInput(key)">+ 新增</el-button>
+     </div>  
 
   </div>
 </template>
@@ -19,30 +29,33 @@
 export default {
   data () {
     return {
-      inputVisible: false,
-      inputValue: ''
+      inputVisible: {},
+      inputValue: {}
     }
   },
   props: ['priceOption', 'priceFactorKv'],
   methods: {
-    handleClose (value, tag) {
-      value.splice(value.indexOf(tag), 1)
+    addPriceFacOption (optionType, optionValue) {
+      this.$emit('addPriceFacOption', optionType, optionValue)
     },
-
-    showInput () {
-      this.inputVisible = true
+    deletePriceFacOption (optionType, optionValue) {
+      this.$emit('deletePriceFacOption', optionType, optionValue)
+    },
+    showInput (type) {
+      this.$set(this.inputVisible, type, true)
       this.$nextTick(_ => {
-        this.$refs.saveTagInput.$refs.input.focus()
+        this.$refs.saveTagInput[this.$refs.saveTagInput.length - 1].$refs.input.focus()
       })
     },
-
-    handleInputConfirm () {
-      let inputValue = this.inputValue
-      if (inputValue) {
-        this.dynamicTags.push(inputValue)
+    handleInputConfirm (type) {
+      if (this.inputValue[type] === '' || this.inputValue[type] === undefined) {
+        this.$set(this.inputVisible, type, false)
+      } else if (this.inputVisible[type]) {
+        let inputValue = this.inputValue[type]
+        this.addPriceFacOption(type, inputValue)
+        this.$set(this.inputVisible, type, false)
+        this.$set(this.inputValue, type, '')
       }
-      this.inputVisible = false
-      this.inputValue = ''
     }
   }
 }
@@ -56,6 +69,7 @@ export default {
   text-align:center;
   width:100px;
   display: inline-block;
+  vertical-align: middle;
 }
 .el-tag + .el-tag {
   margin-left: 10px;
@@ -63,13 +77,17 @@ export default {
 .button-new-tag {
   margin-left: 10px;
   height: 32px;
-  line-height: 30px;
+  line-height: 32px;
   padding-top: 0;
   padding-bottom: 0;
 }
 .input-new-tag {
   width: 90px;
   margin-left: 10px;
-  vertical-align: bottom;
+  vertical-align: middle;
+}
+.h-50{
+  height:50px;
+  line-height:50px;
 }
 </style>
